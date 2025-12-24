@@ -10,15 +10,11 @@ import {
 } from "react";
 import InputField from "./InputField";
 import Button from "./Button";
-import { createTask } from "@/lib/actions/task.actions";
+import { createTaskAction } from "@/lib/actions/task.actions";
 
 const AddTask = (): JSX.Element => {
   const [taskData, setTaskData] = useState({ title: "", description: "" });
-  const [state, createTaskAction, isPending] = useActionState(createTask, {
-    success: false,
-    message: "",
-    error: null,
-  });
+  const [state, createAction, isPending] = useActionState(createTaskAction, {});
 
   useEffect(() => {
     if (state?.success) {
@@ -33,7 +29,7 @@ const AddTask = (): JSX.Element => {
     const description = formData.get("description") as string;
     if (title.trim() && description.trim()) {
       startTransition(() => {
-        createTaskAction(formData);
+        createAction(formData);
       });
     }
   };
@@ -42,7 +38,6 @@ const AddTask = (): JSX.Element => {
     <div className="">
       <h1 className="text-xl font-semibold mb-2">Add Task</h1>
       <form
-        // action={createTaskAction}
         onSubmit={(e) => handleSubmit(e)}
         className="bg-blue-50 w-full p-3 rounded-md"
       >
@@ -72,6 +67,12 @@ const AddTask = (): JSX.Element => {
             disabled={isPending}
           />
         </div>
+        {(state?.error?.title?.errors || state?.error?.description?.errors) && (
+          <p className="bg-red-100 text-sm w-fit rounded-sm text-red-500 px-2 py-1 mb-2 border-l-2">
+            {state?.error?.title?.errors[0] ||
+              state?.error?.description?.errors[0]}
+          </p>
+        )}
         <div className="flex justify-end gap-2">
           {(taskData.title || taskData.description) && (
             <Button
@@ -92,7 +93,7 @@ const AddTask = (): JSX.Element => {
               isPending
             }
           >
-            {isPending ? "..." : "Add Task"}
+            {isPending ? "Adding..." : "Add Task"}
           </Button>
         </div>
       </form>

@@ -9,6 +9,7 @@ interface AlertProps {
   onConfirm: () => Promise<unknown> | void;
   onCancel: () => void;
   loading?: boolean;
+  state?: any;
 }
 
 const Alert = ({
@@ -19,13 +20,14 @@ const Alert = ({
   onConfirm,
   onCancel,
   loading,
+  state,
 }: AlertProps) => {
   return (
     <motion.div
-      className="fixed left-[50%] z-10 translate-x-[-50%] max-w-[90%] w-75 bg-white p-3 rounded-md"
-      initial={{ top: -20, opacity: 0 }}
-      animate={{ top: 20, opacity: 1 }}
-      exit={{ top: -20, opacity: 0 }}
+      className="fixed top-5 z-10 max-w-[90%] w-75 bg-white p-3 rounded-md"
+      initial={{ left: -20, opacity: 0 }}
+      animate={{ left: 20, opacity: 1 }}
+      exit={{ left: -20, opacity: 0 }}
       transition={{ duration: 0.16 }}
     >
       <h1 className="font-medium">{title}</h1>

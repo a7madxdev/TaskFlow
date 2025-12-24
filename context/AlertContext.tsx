@@ -2,7 +2,14 @@
 
 import Alert from "@/components/Alert";
 import Overlay from "@/components/Overlay";
-import { createContext, JSX, ReactNode, useContext, useState } from "react";
+import {
+  createContext,
+  JSX,
+  ReactNode,
+  useContext,
+  useEffect,
+  useState,
+} from "react";
 import { AnimatePresence } from "motion/react";
 
 interface showAlertProps {
@@ -11,9 +18,11 @@ interface showAlertProps {
   btnText: string;
   btnStyle: "default" | "primary" | "danger";
   onConfirm: () => Promise<unknown> | void;
+  loading?: boolean;
   overlay: {
     theme: "dark" | "light";
   };
+  state?: any;
 }
 interface AlertContextType {
   showAlert: (data: showAlertProps) => void;
@@ -24,6 +33,8 @@ const AlertContext = createContext<AlertContextType | undefined>(undefined);
 export const AlertProvider = ({ children }: { children: ReactNode }) => {
   const [alertData, setAlertData] = useState<showAlertProps | null>(null);
   const [loading, setLoading] = useState(false);
+  const [actionsLoading, setActionLoading] = useState<boolean | null>(null);
+
   const showAlert = (data: showAlertProps) => {
     setAlertData(data);
   };
@@ -33,11 +44,10 @@ export const AlertProvider = ({ children }: { children: ReactNode }) => {
 
   const handleConfirm = async () => {
     if (!alertData) return;
-
     try {
       setLoading(true);
       await alertData.onConfirm();
-      setAlertData(null);
+      hideAlert();
     } finally {
       setLoading(false);
     }
@@ -50,9 +60,12 @@ export const AlertProvider = ({ children }: { children: ReactNode }) => {
           <>
             <Alert
               {...alertData}
-              loading={loading}
+              loading={
+                alertData.loading !== undefined ? alertData.loading : loading
+              }
               onConfirm={handleConfirm}
               onCancel={hideAlert}
+              state={alertData.state}
             />
             <Overlay {...alertData.overlay} />
           </>

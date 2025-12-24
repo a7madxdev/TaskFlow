@@ -1,95 +1,134 @@
 "use server";
 
 import { revalidatePath } from "next/cache";
-import { prisma } from "@/lib/prisma";
+import {
+  createTask,
+  deleteTask,
+  getTaskById,
+  toggleTaskStatus,
+  updateTask,
+} from "../services/task.services";
+import z from "zod";
 
-export const createTask = async (currentState: any, formData: FormData) => {
-  const title = (formData.get("title") as string).trim();
-  const description = (formData.get("description") as string).trim();
-  if (!title) return;
+type ActionState = {
+  status?: "idle" | "loading" | "success" | "error";
+  error?: string | any;
+};
+
+const createTaskSchema = z.object({
+  title: z
+    .string()
+    .trim()
+    .nonempty("Title can't be empty")
+    .max(128, "Task title is too long"),
+  description: z
+    .string()
+    .trim()
+    .nonempty("Description can't be empty")
+    .max(256, "Task description is too long"),
+});
+
+const updateTaskSchema = createTaskSchema.extend({
+  id: z.string(),
+});
+
+export const createTaskAction = async (
+  prevState: ActionState,
+  formData: FormData
+): Promise<ActionState> => {
+  const rawData = {
+    title: formData.get("title") as string,
+    description: formData.get("description") as string,
+  };
+  const parsed = createTaskSchema.safeParse(rawData);
+  if (!parsed.success) {
+    return { error: z.treeifyError(parsed.error).properties, status: "error" };
+  }
+  const { title, description } = parsed.data;
 
   try {
-    await prisma.task.create({
-      data: {
-        title,
-        description,
-      },
-    });
+    await createTask(title, description);
     revalidatePath("/");
 
     return {
-      success: true,
-      message: "Task created successfully!",
-      error: null,
+      status: "success",
     };
   } catch (error) {
-    return { success: false, message: "Task not created", error };
+    return { error: "Failed to add the task, try again", status: "error" };
   }
 };
 
-export const toggleTaskStatus = async (currentState: any, taskId: string) => {
+export const toggleTaskStatusAction = async (
+  prevState: ActionState,
+  taskId: string
+): Promise<ActionState> => {
   try {
-    const task = await prisma.task.findUnique({ where: { id: taskId } });
-    if (!task)
-      return { success: false, message: "Task not found", error: null };
-
-    await prisma.task.update({
-      where: { id: taskId },
-      data: { done: !task?.done },
-    });
-
-    revalidatePath("/");
-    return {
-      success: true,
-      message: "Status toggled successfully",
-      error: null,
-    };
-  } catch (error) {
-    console.log(error);
-    return {
-      success: false,
-      message: "Status not toggled successfully",
-      error: error,
-    };
-  }
-};
-
-export const updateTask = async (
-  currentState: any,
-  taskData: { id: string; title: string; description: string }
-) => {
-  const { id, title, description } = taskData;
-  try {
-    const task = await prisma.task.findUnique({ where: { id } });
+    const task = await getTaskById(taskId);
     if (!task)
       return {
-        success: false,
-        message: "Task not found",
-        error: null,
+        error: "This task isn't exist",
+        status: "error",
       };
 
-    await prisma.task.update({ where: { id }, data: { title, description } });
+    await toggleTaskStatus(taskId, !task.done);
+
     revalidatePath("/");
     return {
-      success: true,
-      message: "Task updated successfully!",
-      error: null,
+      status: "success",
     };
   } catch (error) {
     return {
-      success: false,
-      message: "Task not found",
-      error: error,
+      status: "error",
+      error: "Something went wrong, try again",
     };
   }
 };
 
-export const deleteTask = async (id: string) => {
+export const updateTaskAction = async (
+  prevState: ActionState,
+  { id, title, description }: { id: string; title: string; description: string }
+): Promise<ActionState> => {
   try {
-    await prisma.task.delete({ where: { id } });
+    const parsed = updateTaskSchema.safeParse({ id, title, description });
+    if (!parsed.success)
+      return {
+        error: z.treeifyError(parsed.error).properties,
+        status: "error",
+      };
+    const task = await getTaskById(parsed.data.id);
+    if (!task)
+      return {
+        error: "Task does not exist",
+        status: "error",
+      };
+
+    await updateTask(id, {
+      title: parsed.data.title,
+      description: parsed.data.description,
+    });
     revalidatePath("/");
-    return { success: true };
+    return {
+      status: "success",
+    };
   } catch (error) {
-    return { success: false, error };
+    return {
+      error: "Failed to update the task, try again",
+      status: "error",
+    };
+  }
+};
+
+export const deleteTaskAction = async (
+  prevState: ActionState,
+  id: string
+): Promise<ActionState> => {
+  try {
+    const task = await getTaskById(id);
+    if (!task) return { error: "This task isn't exist", status: "error" };
+    await deleteTask(id);
+    revalidatePath("/");
+    return { status: "success" };
+  } catch (error) {
+    return { error: "Failed to delete the task, try again", status: "error" };
   }
 };
