@@ -17,7 +17,7 @@ const AddTask = (): JSX.Element => {
   const [state, createAction, isPending] = useActionState(createTaskAction, {});
 
   useEffect(() => {
-    if (state?.success) {
+    if (state?.status === "success") {
       setTaskData({ title: "", description: "" });
     }
   }, [state]);

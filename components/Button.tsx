@@ -1,4 +1,4 @@
-import { JSX } from "react";
+import { JSX, ReactNode } from "react";
 import { twMerge } from "tailwind-merge";
 
 const Button = ({
@@ -9,7 +9,7 @@ const Button = ({
   onClick,
   disabled = false,
 }: {
-  children: JSX.Element | string;
+  children: ReactNode;
   type?: "submit" | "reset" | "button";
   className?: string;
   style?: "default" | "primary" | "danger";

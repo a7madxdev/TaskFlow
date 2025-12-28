@@ -7,3 +7,7 @@ input {
 button {
   @apply cursor-pointer;
 }
+
+.font-outfit {
+  font-family: var(--font-outfit);
+}
