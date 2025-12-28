@@ -1,17 +1,18 @@
 import type { Metadata } from "next";
-import { Geist, Geist_Mono } from "next/font/google";
+import localFont from "next/font/local";
 import "./globals.css";
 import { AlertProvider } from "@/context/AlertContext";
 import { ToastProvider } from "@/context/ToastContext";
 
-const geistSans = Geist({
-  variable: "--font-geist-sans",
-  subsets: ["latin"],
-});
-
-const geistMono = Geist_Mono({
-  variable: "--font-geist-mono",
-  subsets: ["latin"],
+const outfit = localFont({
+  src: [
+    {
+      path: "../public/fonts/outfit/Outfit-VariableFont_wght.ttf",
+      style: "normal",
+    },
+  ],
+  variable: "--font-outfit",
+  display: "swap",
 });
 
 export const metadata: Metadata = {
@@ -26,9 +27,7 @@ export default function RootLayout({
 }>) {
   return (
     <html lang="en">
-      <body
-        className={`${geistSans.variable} ${geistMono.variable} antialiased`}
-      >
+      <body className={`${outfit.className} antialiased`}>
         <AlertProvider>
           <ToastProvider>{children}</ToastProvider>
         </AlertProvider>

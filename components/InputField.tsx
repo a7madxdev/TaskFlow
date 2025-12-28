@@ -1,5 +1,8 @@
+"use client";
+
 import { icon } from "@/lib/definitions";
-import { JSX } from "react";
+import { Eye, EyeClosed } from "lucide-react";
+import { JSX, RefObject, useState } from "react";
 import { twMerge } from "tailwind-merge";
 
 const InputField = ({
@@ -11,6 +14,9 @@ const InputField = ({
   placeholder,
   className,
   disabled = false,
+  ref,
+  onFocus,
+  onBlur,
 }: {
   type: string;
   name?: string;
@@ -20,7 +26,11 @@ const InputField = ({
   placeholder?: string;
   className?: string;
   disabled?: boolean;
+  ref?: RefObject<null>;
+  onFocus?: () => void;
+  onBlur?: () => void;
 }): JSX.Element => {
+  const [passVisible, setPassVisible] = useState(false);
   return (
     <div
       className={twMerge(
@@ -35,13 +45,25 @@ const InputField = ({
         </span>
       )}
       <input
-        className={`${Icon ? "" : "px-2"} text-sm flex-1`}
-        type={type}
+        className={`${Icon ? "" : "px-2"} text-sm min-w-0 flex-1`}
+        type={type !== "password" ? type : passVisible ? "text" : "password"}
         name={name}
         value={value}
         onChange={(e) => setValue(e.target.value)}
         placeholder={placeholder}
+        ref={ref}
+        onFocus={onFocus}
+        onBlur={onBlur}
       />
+      {type === "password" && (
+        <button
+          className="h-full w-8 grid place-items-center cursor-pointer"
+          type="button"
+          onClick={() => setPassVisible((prev) => !prev)}
+        >
+          {passVisible ? <Eye size={17} /> : <EyeClosed size={17} />}
+        </button>
+      )}
     </div>
   );
 };
