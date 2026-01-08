@@ -1,13 +1,19 @@
 "use client";
 
 import { Toast as ToastType } from "@/context/ToastContext";
-import { CheckLine, CircleAlert } from "lucide-react";
+import { CheckLine, CircleAlert, X } from "lucide-react";
 import { AnimatePresence, motion } from "motion/react";
 import { style } from "motion/react-client";
 import { useRef } from "react";
 import { twMerge } from "tailwind-merge";
 
-const ToastContainer = ({ toasts }: { toasts: ToastType[] }) => {
+const ToastContainer = ({
+  toasts,
+  setToasts,
+}: {
+  toasts: ToastType[];
+  setToasts: Dispatch<SetStateAction<ToastType[]>>;
+}) => {
   const toastsRef = useRef<Record<string, HTMLDivElement | null>>({});
   const toastsHights = toasts.map(
     (t) => toastsRef.current[t.id]?.offsetHeight ?? 0
@@ -17,8 +23,11 @@ const ToastContainer = ({ toasts }: { toasts: ToastType[] }) => {
       .slice(0, index)
       .reduce((sum = 0, h = 0) => sum + h + 12, 0);
   }
+  function closeToast(id: string) {
+    setToasts((prev) => prev.filter((t) => t.id !== id));
+  }
   return (
-    <div className="size-0 fixed top-3 left-3 bg-amber-400/50">
+    <div className="size-0 fixed z-12 top-3 left-3 bg-amber-400/50">
       <AnimatePresence>
         {toasts.map((toast, i) => (
           <Toast
@@ -27,6 +36,7 @@ const ToastContainer = ({ toasts }: { toasts: ToastType[] }) => {
             ref={(el) => (toastsRef.current[toast.id] = el)}
             index={i}
             getTop={getTop}
+            closeToast={closeToast}
           />
         ))}
       </AnimatePresence>
@@ -41,10 +51,12 @@ const Toast = ({
   ref,
   index,
   getTop,
+  closeToast,
 }: ToastType & {
   ref: (el: any) => any;
   index: number;
   getTop: (index: number) => number;
+  closeToast: () => void;
 }) => {
   const types = {
     error: {
@@ -73,7 +85,7 @@ const Toast = ({
   return (
     <motion.div
       className={twMerge(
-        "bg-white w-70 rounded-sm p-2 pl-4 shadow-[0_2px_20px_-0px_#00000044] absolute flex before:w-0.5 before:h-[calc(100%-10px)] before:absolute before:left-1.75 before:top-1.25",
+        "bg-white w-70 rounded-sm p-2 pl-4 shadow-[0_2px_20px_-0px_#00000044] absolute z-12 flex before:w-0.5 before:h-[calc(100%-10px)] before:absolute before:left-1.75 before:top-1.25",
         types[type].style
       )}
       initial={{ opacity: 1, left: -300, top: getTop(index) ?? 0 }}
@@ -90,7 +102,10 @@ const Toast = ({
       >
         <Icon size={16} />
       </span>
-      <p className="text-sm text-gray-700 flex-1">{message}</p>
+      <p className="text-sm text-slate-800 flex-1">{message}</p>
+      <button className="text-slate-500" onClick={() => closeToast(id)}>
+        <X size={16} />
+      </button>
     </motion.div>
   );
 };

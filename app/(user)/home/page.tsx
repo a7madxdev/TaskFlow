@@ -6,7 +6,6 @@ import { redirect } from "next/navigation";
 
 const HomePage = async () => {
   const session = await auth();
-  console.log(session);
   const tasks = await getTasks();
   return (
     <main className="grid md:grid-cols-[300px_1fr] md:gap-10 gap-5 py-5">

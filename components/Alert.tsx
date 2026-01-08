@@ -1,6 +1,6 @@
 "use client";
 
-import { MouseEvent, useEffect, useRef } from "react";
+import { MouseEvent, startTransition, useEffect, useRef } from "react";
 import Button from "./Button";
 import { motion } from "motion/react";
 
@@ -9,10 +9,9 @@ interface AlertProps {
   message: string;
   btnText: string;
   btnStyle: "default" | "primary" | "danger";
-  onConfirm: () => Promise<unknown> | void;
+  onConfirm: () => void;
   onCancel: () => void;
   loading?: boolean;
-  state?: any;
 }
 
 const Alert = ({
@@ -23,7 +22,6 @@ const Alert = ({
   onConfirm,
   onCancel,
   loading,
-  state,
 }: AlertProps) => {
   const alertRef = useRef<HTMLDivElement | null>(null);
   useEffect(() => {
@@ -39,7 +37,7 @@ const Alert = ({
   }, []);
   return (
     <motion.div
-      className="fixed top-5 z-10 max-w-[90%] w-75 bg-white p-3 rounded-md"
+      className="fixed top-5 z-10 max-w-[calc(100%-40px)] w-75 bg-white p-3 rounded-md"
       initial={{ left: -20, opacity: 0 }}
       animate={{ left: 20, opacity: 1 }}
       exit={{ left: -20, opacity: 0 }}
@@ -52,7 +50,7 @@ const Alert = ({
         <Button onClick={onCancel} disabled={loading}>
           Cancel
         </Button>
-        <Button style={btnStyle} onClick={onConfirm} disabled={loading}>
+        <Button style={btnStyle} onClick={() => onConfirm()} disabled={loading}>
           {btnText}
         </Button>
       </div>

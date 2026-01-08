@@ -38,7 +38,7 @@ export const createTaskAction = async (
   formData: FormData
 ): Promise<ActionState> => {
   const session = await auth();
-  if (!session) return { status: "error", error: "Unauthorised" };
+  if (!session?.user?.id) return { status: "error", error: "Unauthorized" };
   const rawData = {
     title: formData.get("title") as string,
     description: formData.get("description") as string,
@@ -50,7 +50,7 @@ export const createTaskAction = async (
   const { title, description } = parsed.data;
 
   try {
-    await createTask(title, description);
+    await createTask(title, description, session.user.id);
     revalidatePath("/");
 
     return {
@@ -66,16 +66,16 @@ export const toggleTaskStatusAction = async (
   taskId: string
 ): Promise<ActionState> => {
   const session = await auth();
-  if (!session) return { status: "error", error: "Unauthorised" };
+  if (!session) return { status: "error", error: "Unauthorized" };
   try {
-    const task = await getTaskById(taskId);
+    const task = await getTaskById(taskId, session.user.id);
     if (!task)
       return {
         error: "This task isn't exist",
         status: "error",
       };
 
-    await toggleTaskStatus(taskId, !task.done);
+    await toggleTaskStatus(taskId, session.user.id, !task.done);
 
     revalidatePath("/");
     return {
@@ -94,7 +94,7 @@ export const updateTaskAction = async (
   { id, title, description }: { id: string; title: string; description: string }
 ): Promise<ActionState> => {
   const session = await auth();
-  if (!session) return { status: "error", error: "Unauthorised" };
+  if (!session) return { status: "error", error: "Unauthorized" };
   try {
     const parsed = updateTaskSchema.safeParse({ id, title, description });
     if (!parsed.success)
@@ -102,17 +102,21 @@ export const updateTaskAction = async (
         error: z.treeifyError(parsed.error).properties,
         status: "error",
       };
-    const task = await getTaskById(parsed.data.id);
+    const task = await getTaskById(parsed.data.id, session.user.id);
     if (!task)
       return {
         error: "Task does not exist",
         status: "error",
       };
 
-    await updateTask(id, {
-      title: parsed.data.title,
-      description: parsed.data.description,
-    });
+    await updateTask(
+      id,
+      {
+        title: parsed.data.title,
+        description: parsed.data.description,
+      },
+      session.user.id
+    );
     revalidatePath("/");
     return {
       status: "success",
@@ -130,11 +134,11 @@ export const deleteTaskAction = async (
   id: string
 ): Promise<ActionState> => {
   const session = await auth();
-  if (!session) return { status: "error", error: "Unauthorised" };
+  if (!session) return { status: "error", error: "Unauthorized" };
   try {
-    const task = await getTaskById(id);
+    const task = await getTaskById(id, session.user.id);
     if (!task) return { error: "This task isn't exist", status: "error" };
-    await deleteTask(id);
+    await deleteTask(id, session.user.id);
     revalidatePath("/");
     return { status: "success" };
   } catch (error) {
