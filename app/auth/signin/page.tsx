@@ -1,7 +1,6 @@
-import React from "react";
 import SignInFlow from "./SignInFlow";
 
-const page = () => {
+const page = async () => {
   return <SignInFlow />;
 };
 

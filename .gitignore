@@ -41,3 +41,8 @@ yarn-error.log*
 next-env.d.ts
 
 /lib/generated/prisma
+google_client_secret.json
+
+/generated/prisma
+
+.txt

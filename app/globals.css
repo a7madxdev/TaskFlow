@@ -1,5 +1,14 @@
 @import "tailwindcss";
 
+@theme {
+  --color-dark: #0f2854;
+  --color-primary: #1c4d8d;
+  --color-light: #4988c4;
+  --color-accent: #bde8f5;
+
+  --breakpoint-xm: 900px;
+}
+
 input {
   outline: none;
 }

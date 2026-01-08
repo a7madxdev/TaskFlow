@@ -1,3 +1,6 @@
+"use client";
+
+import { MouseEvent, useEffect, useRef } from "react";
 import Button from "./Button";
 import { motion } from "motion/react";
 
@@ -22,6 +25,18 @@ const Alert = ({
   loading,
   state,
 }: AlertProps) => {
+  const alertRef = useRef<HTMLDivElement | null>(null);
+  useEffect(() => {
+    const handleOutsideClick = (e: Event) => {
+      if (alertRef.current && !alertRef.current.contains(e.target as Node)) {
+        onCancel();
+      }
+    };
+
+    document.addEventListener("mousedown", handleOutsideClick);
+
+    return () => document.removeEventListener("mousedown", handleOutsideClick);
+  }, []);
   return (
     <motion.div
       className="fixed top-5 z-10 max-w-[90%] w-75 bg-white p-3 rounded-md"
@@ -29,6 +44,7 @@ const Alert = ({
       animate={{ left: 20, opacity: 1 }}
       exit={{ left: -20, opacity: 0 }}
       transition={{ duration: 0.16 }}
+      ref={alertRef}
     >
       <h1 className="font-medium">{title}</h1>
       <p className="text-sm mt-1">{message}</p>

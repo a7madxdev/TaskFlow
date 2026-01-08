@@ -9,6 +9,7 @@ import {
   updateTask,
 } from "../services/task.services";
 import z from "zod";
+import { auth } from "@/auth";
 
 type ActionState = {
   status?: "idle" | "loading" | "success" | "error";
@@ -36,6 +37,8 @@ export const createTaskAction = async (
   prevState: ActionState,
   formData: FormData
 ): Promise<ActionState> => {
+  const session = await auth();
+  if (!session) return { status: "error", error: "Unauthorised" };
   const rawData = {
     title: formData.get("title") as string,
     description: formData.get("description") as string,
@@ -62,6 +65,8 @@ export const toggleTaskStatusAction = async (
   prevState: ActionState,
   taskId: string
 ): Promise<ActionState> => {
+  const session = await auth();
+  if (!session) return { status: "error", error: "Unauthorised" };
   try {
     const task = await getTaskById(taskId);
     if (!task)
@@ -88,6 +93,8 @@ export const updateTaskAction = async (
   prevState: ActionState,
   { id, title, description }: { id: string; title: string; description: string }
 ): Promise<ActionState> => {
+  const session = await auth();
+  if (!session) return { status: "error", error: "Unauthorised" };
   try {
     const parsed = updateTaskSchema.safeParse({ id, title, description });
     if (!parsed.success)
@@ -122,6 +129,8 @@ export const deleteTaskAction = async (
   prevState: ActionState,
   id: string
 ): Promise<ActionState> => {
+  const session = await auth();
+  if (!session) return { status: "error", error: "Unauthorised" };
   try {
     const task = await getTaskById(id);
     if (!task) return { error: "This task isn't exist", status: "error" };

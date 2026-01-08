@@ -6,8 +6,8 @@ import {
   createContext,
   JSX,
   ReactNode,
+  startTransition,
   useContext,
-  useEffect,
   useState,
 } from "react";
 import { AnimatePresence } from "motion/react";
@@ -17,7 +17,7 @@ interface showAlertProps {
   message: string;
   btnText: string;
   btnStyle: "default" | "primary" | "danger";
-  onConfirm: () => Promise<unknown> | void;
+  onConfirm: () => void;
   loading?: boolean;
   overlay: {
     theme: "dark" | "light";
@@ -46,7 +46,7 @@ export const AlertProvider = ({ children }: { children: ReactNode }) => {
     if (!alertData) return;
     try {
       setLoading(true);
-      await alertData.onConfirm();
+      startTransition(() => alertData.onConfirm());
       hideAlert();
     } finally {
       setLoading(false);
