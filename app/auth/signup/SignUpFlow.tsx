@@ -1,15 +1,21 @@
 "use client";
 
 import Button from "@/components/Button";
-import InputField from "@/components/InputField";
 import Tip from "@/components/Tip";
 import Image from "next/image";
 import Link from "next/link";
-import { FormEvent, SetStateAction, useEffect, useState } from "react";
+import { FormEvent, useEffect, useState } from "react";
 import z from "zod";
 import CredentialsStage from "./stages/CredentialsStage";
 import CodeStage from "./stages/CodeStage";
 import EmailStage from "./stages/EmailStage";
+import { sendVerificationCode } from "@/lib/actions/send-verification-code.action";
+import {
+  createUserByCredentials,
+  signInWithGoogle,
+  verifyEmailCode,
+} from "@/lib/actions/auth.actions";
+import { redirect } from "next/navigation";
 
 const SignUpFlow = () => {
   const [email, setEmail] = useState("");
@@ -19,6 +25,7 @@ const SignUpFlow = () => {
   const [stage, setStage] = useState<"email" | "code" | "credentials">("email");
   const [codeTimer, setCodeTimer] = useState(10);
   const [error, setError] = useState("");
+  const [loading, setLoading] = useState(false);
 
   useEffect(() => {
     let codeInterval: NodeJS.Timeout;
@@ -32,6 +39,10 @@ const SignUpFlow = () => {
     return () => clearInterval(codeInterval);
   }, [stage]);
 
+  useEffect(() => {
+    console.log("loading", loading);
+  }, [loading]);
+
   const realTimeFormat = (rawSeconds: number) => {
     const rawMinutes = rawSeconds / 60;
     const minutes = Math.floor(rawMinutes);
@@ -42,9 +53,11 @@ const SignUpFlow = () => {
     }`;
   };
 
-  const handleSubmit = (e: FormEvent<HTMLFormElement>) => {
+  const handleSubmit = async (e: FormEvent<HTMLFormElement>) => {
     e.preventDefault();
+    // console.log(normalizeUsernameBase(prompt("email") as unknown as string));
     setError("");
+    setLoading(true);
     if (stage === "email") {
       const emailValidation = z
         .string()
@@ -57,7 +70,12 @@ const SignUpFlow = () => {
       if (!result.success) {
         setError(z.treeifyError(result.error).errors[0]);
       } else {
-        setStage("code");
+        const sendCodeResult = await sendVerificationCode(email);
+        if (sendCodeResult.success) {
+          setStage("code");
+        } else {
+          setError(sendCodeResult.error as string);
+        }
       }
     } else if (stage === "code") {
       const codeValidation = z
@@ -68,7 +86,12 @@ const SignUpFlow = () => {
       if (!result.success) {
         setError(z.treeifyError(result.error).errors[0]);
       } else {
-        setStage("credentials");
+        const result = await verifyEmailCode(email, code);
+        if (!result.error) {
+          setStage("credentials");
+        } else {
+          setError(result.error);
+        }
       }
     } else if (stage === "credentials") {
       const credentialsValidation = z.object({
@@ -108,15 +131,31 @@ const SignUpFlow = () => {
           setError(errors.password.errors[0]);
         }
       } else {
-        alert("Account created");
+        const result = await createUserByCredentials(
+          email,
+          code,
+          username,
+          password
+        );
+        if (result.error) {
+          setError(result.error);
+        }
       }
     }
+    setLoading(false);
   };
 
-  const sendNewCode = () => {
-    setCode("");
-    setCodeTimer(300);
-    setStage("code");
+  const sendNewCode = async () => {
+    setLoading(true);
+    const sendCodeResult = await sendVerificationCode(email);
+    if (sendCodeResult.success) {
+      setCode("");
+      setCodeTimer(10);
+      setStage("code");
+    } else {
+      setError(sendCodeResult.error as string);
+    }
+    setLoading(false);
   };
 
   return (
@@ -132,6 +171,7 @@ const SignUpFlow = () => {
             codeTimer={codeTimer}
             realTimeFormat={realTimeFormat}
             sendNewCode={sendNewCode}
+            loading={loading}
           />
         ) : stage === "credentials" ? (
           <CredentialsStage
@@ -142,19 +182,27 @@ const SignUpFlow = () => {
           />
         ) : null}
         {error && <Tip content={error} type="error" />}
-        <Button className="w-full mt-2" style="primary" type="submit">
+        <Button
+          className="w-full mt-2"
+          style="primary"
+          type="submit"
+          disabled={loading}
+        >
           Submit
         </Button>
       </form>
       <span className="text-xs block text-center text-gray-600 my-1.5">OR</span>
-      <Button className="flex items-center w-full justify-center gap-1">
+      <Button
+        className="flex items-center w-full justify-center gap-1"
+        onClick={signInWithGoogle}
+      >
         <Image
           src={"/icons/google.svg"}
           alt={"Google"}
           width={18}
           height={18}
         />
-        Sign Up With Google
+        Continue With Google
       </Button>
       <p className="text-sm mt-2">
         Already have an account ?{" "}

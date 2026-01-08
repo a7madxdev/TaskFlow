@@ -3,18 +3,24 @@
 import Button from "@/components/Button";
 import InputField from "@/components/InputField";
 import Tip from "@/components/Tip";
+import {
+  signInWithCredentials,
+  signInWithGoogle,
+} from "@/lib/actions/auth.actions";
 import Image from "next/image";
 import Link from "next/link";
-import { FormEvent, useState } from "react";
+import { FormEvent, startTransition, useState } from "react";
 import z from "zod";
 
 const SignInFlow = () => {
   const [usernameOrEmail, setUsernameOrEmail] = useState("");
   const [password, setPassword] = useState("");
   const [error, setError] = useState("");
+  const [loading, setLoading] = useState(false);
 
-  const handleSubmit = (e: FormEvent<HTMLFormElement>) => {
+  const handleSubmit = async (e: FormEvent<HTMLFormElement>) => {
     e.preventDefault();
+    setLoading(true);
     setError("");
     const accountValidation = z.object({
       usernameOrEmail: z
@@ -44,7 +50,13 @@ const SignInFlow = () => {
       } else if (errors?.password?.errors) {
         setError(errors.password.errors[0]);
       }
+    } else {
+      const result = await signInWithCredentials(usernameOrEmail, password);
+      if (result?.error) {
+        setError(result?.error);
+      }
     }
+    setLoading(false);
   };
 
   return (
@@ -72,19 +84,27 @@ const SignInFlow = () => {
           Forgot your password ?
         </Link>
         {error && <Tip content={error} type="error" />}
-        <Button className="w-full mt-2" style="primary" type="submit">
+        <Button
+          className="w-full mt-2"
+          style="primary"
+          type="submit"
+          disabled={loading}
+        >
           Submit
         </Button>
       </form>
       <span className="text-xs block text-center text-gray-600 my-1.5">OR</span>
-      <Button className="flex items-center w-full justify-center gap-1">
+      <Button
+        className="flex items-center w-full justify-center gap-1"
+        onClick={() => signInWithGoogle()}
+      >
         <Image
           src={"/icons/google.svg"}
           alt={"Google"}
           width={18}
           height={18}
         />
-        Sign In With Google
+        Continue With Google
       </Button>
       <p className="text-sm mt-2">
         Don't have an account ?{" "}

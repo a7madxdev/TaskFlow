@@ -2,6 +2,7 @@
 
 import InputField from "@/components/InputField";
 import { Dispatch, SetStateAction, useEffect, useRef } from "react";
+import { twMerge } from "tailwind-merge";
 
 const CodeStage = ({
   code,
@@ -9,12 +10,14 @@ const CodeStage = ({
   codeTimer,
   realTimeFormat,
   sendNewCode,
+  loading,
 }: {
   code: string;
   setCode: Dispatch<SetStateAction<string>>;
   codeTimer: number;
   realTimeFormat: (t: number) => string;
   sendNewCode: () => void;
+  loading: boolean;
 }) => {
   const codeRef = useRef(null);
   useEffect(() => {
@@ -35,7 +38,12 @@ const CodeStage = ({
         setValue={setCode}
         ref={codeRef}
       />
-      <div className="mt-2 text-sm">
+      <div
+        className={twMerge(
+          "mt-2 text-sm",
+          loading ? "opacity-50 pointer-events-none" : ""
+        )}
+      >
         {codeTimer > 0 ? (
           <p>Send a new code after {realTimeFormat(codeTimer)}</p>
         ) : (
