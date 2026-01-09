@@ -65,7 +65,6 @@ export const AlertProvider = ({ children }: { children: ReactNode }) => {
               }
               onConfirm={handleConfirm}
               onCancel={hideAlert}
-              state={alertData.state}
             />
             <Overlay {...alertData.overlay} />
           </>

@@ -8,9 +8,16 @@ interface ImageType {
   className: string;
 }
 const Avatar = ({ src, alt, size, className }: ImageType) => {
+  const fallbackImage = "/images/profile-pic.png";
   return (
     <div className={twMerge("rounded-full overflow-hidden w-fit", className)}>
-      <Image src={src} alt={alt} width={size} height={size} />
+      <Image
+        src={src || fallbackImage}
+        alt={alt}
+        width={size}
+        height={size}
+        onError={() => console.log("Error in Avatar")}
+      />
     </div>
   );
 };

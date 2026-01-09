@@ -64,7 +64,6 @@ const Task = ({
     }
   }, [toggleState]);
   useEffect(() => {
-    console.log(updateState);
     if (
       updateState.status === "error" &&
       typeof updateState.error === "string"

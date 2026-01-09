@@ -20,9 +20,12 @@ const TasksList = ({ tasks }: { tasks: TaskType[] }) => {
   const { showToast } = useToast();
   const pendingTasks = tasks.filter((task) => !task.done);
   const completedTasks = tasks.filter((task) => task.done);
-  const [deleteState, deleteAction] = useActionState(deleteTaskAction, {
-    status: "idle",
-  });
+  const [deleteState, deleteAction, deletePending] = useActionState(
+    deleteTaskAction,
+    {
+      status: "idle",
+    }
+  );
   const [deletingId, setDeletingId] = useState<string | null>(null);
   useEffect(() => {
     if (deleteState.status === "success") {
@@ -44,6 +47,7 @@ const TasksList = ({ tasks }: { tasks: TaskType[] }) => {
         deleteAction(id);
         setDeletingId(id);
       },
+      loading: deletePending,
       overlay: {
         theme: "dark",
       },
